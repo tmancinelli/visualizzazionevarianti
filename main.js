@@ -3,41 +3,36 @@ class LaCamera {
   #witnesses;
   #enabledWitnesses;
 
-  #selectWitnesses;
-  #teiWitness;
-  #teiFinal;
+  #selectWitnessesA;
+  #selectWitnessesB;
 
-  #appPrefix;
-  #appCounter;
-  #CETEIcean;
+  #tei;
+  #teiA;
+  #teiB;
 
   constructor() {
     this.#witnesses = [];
 
-    this.#selectWitnesses = document.getElementById("select-witnesses");
-    this.#selectWitnesses.addEventListener("change", () => this.#compareWitness());
+    this.#selectWitnessesA = document.getElementById("select-witnesses-a");
+    this.#selectWitnessesA.addEventListener("change", () => this.#compareWitness());
 
-    this.#teiWitness = document.getElementById("tei-witness");
-    this.#teiFinal = document.getElementById("tei-final");
+    this.#selectWitnessesB = document.getElementById("select-witnesses-b");
+    this.#selectWitnessesB.addEventListener("change", () => this.#compareWitness());
 
-    this.#CETEIcean = new CETEI({
-      ignoreFragmentId: true
-    })
-    this.#CETEIcean.addBehaviors({
-      "tei": {
-        "ptr": () => [],
-        "note": () => [],
-        "app": e => {
-          const span = document.createElement('span');
-          span.setAttribute('id', `${this.#appPrefix}-${++this.#appCounter}`);
-          span.innerHTML = e.innerHTML;
-          return span;
-        }
-      }
-    });
+    this.#teiA = document.getElementById("tei-A");
+    this.#teiB = document.getElementById("tei-B");
+    this.#tei = document.getElementById("tei");
   }
 
   async initialize() {
+    await this.#initializeMain();
+    await this.#initializeManuscript();
+
+    this.#witnesses.sort((a, b) => a.start > b.start);
+    this.#enabledWitnesses = this.#witnesses.filter(wit => wit.enabled);
+  }
+
+  async #initializeMain() {
     const txt = await fetch("data/lacamera_varianti.xml").then(r => r.text());
 
     const parser = new DOMParser();
@@ -54,7 +49,8 @@ class LaCamera {
           this.#witnesses.push({ id, enabled: false, content: null, start: null });
           break;
         case 1:
-          this.#witnesses.push({ id, enabled: true, content: dates[0].textContent, start: this.#parseDate(dates[0].getAttribute('when'))});
+          const rdgs = [...this.#xml.getElementsByTagName("rdg")].filter(ws => ws.getAttribute("wit")?.split(" ").includes(`#${id}`));
+          this.#witnesses.push({ id, enabled: rdgs.length > 0, content: dates[0].textContent, start: this.#parseDate(dates[0].getAttribute('when')), xml: this.#generateTei(this.#xml, id, false)});
           break;
         default:
           console.warn(`Witness ${id} is excluded because it contains more than 1 "date" tag`);
@@ -62,8 +58,20 @@ class LaCamera {
       }
     }
 
-    this.#witnesses.sort((a, b) => a.date < b.date);
-    this.#enabledWitnesses = this.#witnesses.filter(wit => wit.enabled);
+    this.#witnesses.push({ id: '1997', enabled: true, content: 'Meridiani 1997', start: this.#parseDate('1997'), xml: this.#generateTei(this.#xml, '', true)});
+
+    this.#validateTei();
+  }
+
+  async #initializeManuscript() {
+    const txt = await fetch("data/lacamera_manoscritto.xml").then(r => r.text());
+
+    const parser = new DOMParser();
+    const xml = parser.parseFromString(txt,"text/xml");
+
+    const id="manoscritto";
+
+    this.#witnesses.push({ id, enabled: true, content: 'manoscritto', start: this.#parseDate('1234'), xml: this.#generateTei(xml, id, false)});
 
     this.#validateTei();
   }
@@ -88,69 +96,80 @@ class LaCamera {
     [...this.#xml.getElementsByTagName("rdg")].filter(ws => ws.hasAttribute("wit")).forEach(ws => {
       for (const witId of ws.getAttribute("wit")?.split(" ")) {
         if (!this.#witnesses.find(wit => witId === `#${wit.id}`)) {
-          console.error("BAKU", `rdg validation: Unable to find wit with ID ${witId}`);
+          console.error(`rdg validation: Unable to find wit with ID ${witId}`);
         }
       }
     });
   }
 
-  createTimeline() {
-    const timeline = new vis.Timeline(document.getElementById("timeline"), new vis.DataSet(this.#enabledWitnesses), {
-      height: '200px',
-    });
-
-    timeline.on('select', properties => {
-      if (properties.items.length === 0) {
-        this.#selectWitnesses.value = this.#enabledWitnesses[0].id;
-        timeline.setSelection(this.#enabledWitnesses[0].id);
-      } else {
-        this.#selectWitnesses.value = properties.items[0];
-      }
-
-      this.#compareWitness();
-    });
-
-    timeline.setSelection(this.#enabledWitnesses[0].id);
-  }
-
   populateWitnesses() {
     this.#enabledWitnesses.forEach(witness => {
-      const o = document.createElement("option");
-      o.textContent = witness.content;
-      o.value = witness.id;
-      this.#selectWitnesses.appendChild(o);
+      for (const a of [this.#selectWitnessesA, this.#selectWitnessesB]) {
+        const o = document.createElement("option");
+        o.textContent = witness.content;
+        o.value = witness.id;
+        a.appendChild(o);
+      }
     });
 
-    this.#selectWitnesses.value = this.#enabledWitnesses[0].id;
+    this.#selectWitnessesA.value = this.#enabledWitnesses[0].id;
+    this.#selectWitnessesB.value = this.#enabledWitnesses[0].id;
 
     this.#compareWitness();
   }
 
   #compareWitness() {
-    this.#generateTei(this.#teiWitness, false, "wit", "final");
-    this.#generateTei(this.#teiFinal, true, "final", "wit");
+    const a = this.#enabledWitnesses.find(a => a.id === this.#selectWitnessesA.value).xml;
+    const b = this.#enabledWitnesses.find(a => a.id === this.#selectWitnessesB.value).xml;
+
+    this.#teiA.innerHTML = b.replace(/\n/g, '<br />');
+    this.#renderDiff(Diff.diffWords(a,b));
+    this.#teiB.innerHTML = a.replace(/\n/g, '<br />');
   }
 
-  #generateTei(where, forceLem, prefix, otherPrefix) {
+  #renderDiff(diff) {
+    const blocks = [];
+
+    diff.forEach(a => {
+      if (a.added) {
+        blocks.push(`<span class="removed">${a.value}</span>`.replace(/\n/g, '<br />'));
+        return;
+      }
+
+      if (a.removed) {
+        blocks.push(`<span class="added">${a.value}</span>`.replace(/\n/g, '<br />'));
+        return;
+      }
+
+      blocks.push(`<span class="eq">${a.value}</span>`.replace(/\n/g, '<br />'));
+    });
+     
+    this.#tei.innerHTML = blocks.join('');
+  }
+
+  #generateTei(parentXml, witId, forceLem) {
     // 0. clone the XML
-    const xml = this.#cloneXml();
+    const xml = this.#cloneXml(parentXml);
 
     // 1. trim the XML
-    this.#trimXml(xml, this.#selectWitnesses.value);
+    this.#trimXml(xml, witId);
 
     // 2. drop app nodes
-    this.#dropAppNodes(xml, this.#selectWitnesses.value, forceLem);
+    this.#dropAppNodes(xml, witId, forceLem);
 
-    // TODO: 3. identify the similarity
-
-    // 4. display
-    this.#displayXml(xml, where, prefix, otherPrefix);
+    // 3. prettier XML
+    return this.#filterXML(xml);
   }
 
-  #cloneXml() {
-    const xml = this.#xml.implementation.createDocument(this.#xml.namespaceURI, null, null);
-    xml.appendChild(xml.importNode(this.#xml.documentElement, true));
+  #cloneXml(parentXml) {
+    const xml = parentXml.implementation.createDocument(parentXml.namespaceURI, null, null);
+    xml.appendChild(xml.importNode(parentXml.documentElement, true));
     return xml;
+  }
+
+  #filterXML(xml) {
+    [...xml.getElementsByTagName('note')].forEach(a => a.remove());
+    return [...xml.getElementsByTagName('l')].map(l => l.textContent.replace(/\n/g, ' ').replace(/ +(?= )/g,'').trim()).join('\n')
   }
 
   #trimXml(xml, id) {
@@ -212,7 +231,7 @@ class LaCamera {
         console.warn(`Too many "rdg" for wit ${id}`);
       }
 
-      if (rdgs.length === 0) {
+      if (forceLem || rdgs.length === 0) {
         const lems = [...app.getElementsByTagName("lem")];
         if (lems.length > 1) {
           console.warn(`Too many "lem" for wit ${id}`);
@@ -223,56 +242,18 @@ class LaCamera {
             app.before(lems[0].firstChild);
           }
         }
-
-        app.remove();
-        continue;
+      } else {
+        while (rdgs[0].firstChild) {
+          app.before(rdgs[0].firstChild);
+        }
       }
 
-      for (const node of [...app.children]) {
-        if (!["lem", "rdg"].includes(node.nodeName)) {
-          console.warn(`Unsupported node type ${node.nodeName} for tag app in wit ${wid}`);
-        }
-
-        if (node.nodeName === 'lem' && forceLem) {
-          continue;
-        }
- 
-        if (node === rdgs[0] && !forceLem) {
-          continue;
-        }
-
-        node.remove();
-      }
+      app.remove();
     }
   }
 
-  #displayXml(xml, where, prefix, otherPrefix) {
-    this.#appPrefix = prefix;
-    this.#appCounter = 0;
-
-    this.#CETEIcean.domToHTML5(xml, data => {
-      while (where.firstChild) {
-        where.firstChild.remove();
-      }
-      where.appendChild(data);
-    });
-
-    const overlay = document.createElement('div');
-    overlay.classList.add("overlay");
-
-    [...where.getElementsByTagName("span")].filter(s => s.id.startsWith(prefix)).forEach(span => {
-      span.addEventListener("mouseover", () => {
-        span.classList.add("wit-highlight");
-        const otherSpan = document.getElementById(`${otherPrefix}${span.id.slice(prefix.length)}`);
-        otherSpan.classList.add("wit-highlight");
-      });
-
-      span.addEventListener("mouseout", () => {
-        span.classList.remove("wit-highlight");
-        const otherSpan = document.getElementById(`${otherPrefix}${span.id.slice(prefix.length)}`);
-        otherSpan.classList.remove("wit-highlight");
-      });
-    });
+  #displayXml(xml, where) {
+    where.textContent = xml;
   }
 
   #parseDate(str) {
@@ -295,5 +276,4 @@ class LaCamera {
 const i = new LaCamera();
 i.initialize().then(() => {
   i.populateWitnesses();
-  i.createTimeline();
 });
