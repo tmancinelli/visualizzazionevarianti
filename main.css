@@ -41,3 +41,7 @@ p.break {
   filter: blur(3px)
 }
 */
+#timeline {
+  font-size: 10px;
+  height: 100%;
+}
