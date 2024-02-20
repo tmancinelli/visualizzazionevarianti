@@ -12,7 +12,25 @@
             <p>Publication Information</p>
          </publicationStmt>
          <sourceDesc>
-            <p>Manuscript</p>
+          <msDesc>
+           <msIdentifier>
+            <settlement>Parma</settlement>
+            <repository>Archivio di Stato di Parma</repository>
+            <idno type="Bod"></idno>
+           </msIdentifier>
+           <msContents>
+            <msItem>
+             <author>Attilio Bertolucci</author>
+            </msItem>
+           </msContents>
+           <physDesc>
+            <objectDesc>
+             <p>Busta 3, fascicolo 1-18</p>
+            </objectDesc>
+            <handDesc hands="3">
+            </handDesc>
+           </physDesc>
+          </msDesc>
          </sourceDesc>
       </fileDesc>
   </teiHeader>
@@ -106,24 +124,24 @@
 <l>Interrotte da paesi ove prospera</l>
 <l>E fiorisce di figli e figlie belle</l>
 <l>La nuova borghesia proprietaria.</l>
-<l><del hand="" type="verse"/></l>
-<l><placeName>Verolanuova</placeName>... È qui <del hand="" type="word" atLeast="2"/>che <del hand="" type="word" atLeast="2"/>sei <add hand="" type="word" atLeast="1">sceso</add></l>
+<l><gap reason="deleted" /></l>
+<l><placeName>Verolanuova</placeName>... È qui <gap reason="deleted" atLeast="2"/>che <gap reason="deleted" atLeast="2"/>sei <add hand="" type="word" atLeast="1">sceso</add></l>
 <l>La prima volta che hai viaggiato solo</l>
-<l>Lasciando <del type="word" atLeast="1"/>padre e madre a masticare</l>
+<l>Lasciando <gap reason="deleted" atLeast="1"/>padre e madre a masticare</l>
 <l>Un'amara <del>vecchiaia</del><add place="above">esistenza</add> di diabete</l>
-<l>E gotta, è qui che una <del type="word" atLeast="1"/><add place="below">gente</add> bigotta,</l>
+<l>E gotta, è qui che una <gap reason="deleted" atLeast="1"/><add place="below">gente</add> bigotta,</l>
 <pb n="5"/>
-<l><del type="word" atLeast="3"/><add place="above">Educata tristemente</add> in collegio <del type="word" atLeast="1"/></l>
+<l><gap reason="deleted" atLeast="3"/><add place="above">Educata tristemente</add> in collegio <gap reason="deleted" atLeast="1"/></l>
 <l><del>Ti ha offerto il meglio del tuo sangue</del></l>
 <l>Si sfoga in cacce accanite, le donne</l>
 <l>Brune per fumi d'incensi e di spiedi</l>
 <l>Sospirando mariti più loquaci</l>
 <l>e di pelle più rosea dei fratelli.</l>
-<l>Un invito <del hand="" type="word" atLeast="3"/> <add>alla <del hand="" type="word" atLeast="1"/> porta</add>per il passo</l>
+<l>Un invito <gap reason="deleted" atLeast="3"/> <add>alla <gap reason="deleted" atLeast="1"/> porta</add>per il passo</l>
 <l>delle anitre, una fiducia giovanile</l>
 <l>nell'ignoto ti spingono alla villa</l>
 <l>Appena fuori, <add place="above">in un</add>mattinod'oro</l>
-<l><del>Brumoso che</del><del hand="" type="word" atLeast="4"/></l>
+<l><del>Brumoso che</del><gap reason="deleted" atLeast="4"/></l>
 <l><del>che si vela di bruma</del></l>
 <l>che si vela di bruma, ed i gerani</l>
 <l><del>Nelle cime già annunciano Regina</del></l>
@@ -131,10 +149,10 @@
 <l>Dalle aiuole già annunciano Regina,</l>
 <l>il suo incarnato che scurisce, dietro</l>
 <l><del>Le persiane, del verde che <add place="above">tra</add> le foglie</del></l>
-<l><del type="verse"/></l>
-<l><del type="verse"/></l>
-<l><del type="verse"/></l>
-<l><del type="verse"/></l>
+<l><gap reason="deleted" /></l>
+<l><gap reason="deleted" /></l>
+<l><gap reason="deleted" /></l>
+<l><gap reason="deleted" /></l>
 <pb n="6"/>
 <l>Le persiane accostate strettamente</l>
 <l>Mentre nel cielo che si chiude pioggia</l>
